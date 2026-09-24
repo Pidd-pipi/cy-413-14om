@@ -21,6 +21,7 @@ MindGarden 是一款用于温柔记录每日心情、完成轻量自我觉察测
 
 - **心情花园**：记录 1–10 的心情指数、多个情绪标签和备注，查看最近趋势曲线。
 - **情绪记录**：按日期筛选，保存情绪列表；`MoodSelector` 在 Dashboard 和 Moods 页面共享。
+- **自定义情绪标签**：五个内置标签之外，可在快速记录/新增记录里就地新增标签（如“兴奋”“期待”）。同一账号同名只保留一个；名称不能为空、最多 8 个字、最多 12 个，越界时当场提示。新建成功后立即出现在选择区并自动勾选；停用后不再出现，但过去记录的文字与图表统计继续保留。保存情绪时只接受本账号当前可选择的标签。
 - **心理测评**：浏览压力/睡眠测评，答题后得到分数、结果和关照建议。
 - **日记本**：写作私密日记，记录天气和心情，并用时间轴回顾；`MoodCard` 同时服务情绪记录和日记页。
 - **个人中心**：修改资料、头像链接，查看完成过的测评报告。
@@ -89,6 +90,8 @@ Vite 会把本地 `/api` 请求重写到 `http://localhost:19413/v1`；Docker �
 | GET | `/api/v1/users/reports` | 测评报告汇总 |
 | GET / POST | `/api/v1/moods` | 查询（支持 `date`）/创建情绪 |
 | PUT / DELETE | `/api/v1/moods/:id` | 修改/删除情绪 |
+| GET / POST | `/api/v1/mood-tags` | 查询本账号可用自定义标签/新建（同名且已停用时恢复） |
+| DELETE | `/api/v1/mood-tags/:id` | 停用自定义标签（历史记录保留） |
 | GET | `/api/v1/assessments` | 测评列表 |
 | POST | `/api/v1/assessments/:id/take` | 提交答案与生成结果 |
 | POST | `/api/v1/assessments` | 创建测评（仅 admin） |
@@ -150,6 +153,8 @@ Vite 会把本地 `/api` 请求重写到 `http://localhost:19413/v1`；Docker �
 4. 前端定义及类型：`frontend/src/constants/mood.ts`、`frontend/src/types/index.ts`。
 5. 前端交互与展示：`frontend/src/components/common/MoodSelector.tsx`、`MoodCard.tsx`、`MoodTrendChart.tsx`、`frontend/src/utils/moodColor.ts`、`frontend/src/api/mood.ts`。
 6. 页面消费：`frontend/src/pages/Dashboard.tsx`、`Moods.tsx`、`Journals.tsx`。
+
+除内置枚举外，每个账号还可拥有至多 12 个**自定义标签**（`mood_tag_defs` 表，按 `(user_id,name)` 唯一，软停用标志 `is_active`）。它贯穿：`model/mood_tag.go` → `repository/mood_tag_repository.go` → `service/mood_tag_service.go` → `handler/mood_tag_handler.go` → `router/mood_tags.go` → 前端 `api/mood.ts`、`stores/moodStore.ts` 的 `customTagStore`、`hooks/useCustomTags.ts` 与共享组件 `MoodSelector.tsx`。历史情绪中的标签按名字原样存于 `moods.mood_tags`，因此停用标签不影响历史文字与统计。
 
 ### AssessmentCategory
 

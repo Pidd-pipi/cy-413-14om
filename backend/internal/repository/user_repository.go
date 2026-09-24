@@ -7,6 +7,7 @@ import (
 )
 
 var ErrNotFound = errors.New("not found")
+var ErrConflict = errors.New("conflict")
 
 type UserRepository interface {
 	Create(*model.User) error

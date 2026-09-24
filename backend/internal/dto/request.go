@@ -15,6 +15,9 @@ type UpdateProfileRequest struct {
 	BirthDate string `json:"birth_date"`
 	Gender    string `json:"gender" validate:"omitempty,oneof=male female other"`
 }
+type MoodTagCreateRequest struct {
+	Name string `json:"name" validate:"required,max=32"`
+}
 type MoodRequest struct {
 	MoodLevel  int      `json:"mood_level" validate:"required,min=1,max=10"`
 	MoodTags   []string `json:"mood_tags" validate:"required,min=1,max=5"`
