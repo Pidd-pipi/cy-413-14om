@@ -21,6 +21,9 @@ type MoodRequest struct {
 	Note       string   `json:"note" validate:"max=500"`
 	RecordDate string   `json:"record_date" validate:"required,datetime=2006-01-02"`
 }
+type MoodTagRequest struct {
+	Name string `json:"name"`
+}
 type AssessmentRequest struct {
 	Title       string `json:"title" validate:"required,max=100"`
 	Description string `json:"description" validate:"max=500"`

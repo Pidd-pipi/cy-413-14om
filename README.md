@@ -21,6 +21,7 @@ MindGarden 是一款用于温柔记录每日心情、完成轻量自我觉察测
 
 - **心情花园**：记录 1–10 的心情指数、多个情绪标签和备注，查看最近趋势曲线。
 - **情绪记录**：按日期筛选，保存情绪列表；`MoodSelector` 在 Dashboard 和 Moods 页面共享。
+- **自定义情绪标签**：除 5 个固定标签外，可创建自己的标签（名称 1–8 个字、每账号最多 12 个启用中标签，同名自动去重）；标签可停用，停用后新记录不可再选，但历史记录与统计中的文字仍然保留；保存情绪时仅接受当前账号可选择的标签。
 - **心理测评**：浏览压力/睡眠测评，答题后得到分数、结果和关照建议。
 - **日记本**：写作私密日记，记录天气和心情，并用时间轴回顾；`MoodCard` 同时服务情绪记录和日记页。
 - **个人中心**：修改资料、头像链接，查看完成过的测评报告。
@@ -89,6 +90,8 @@ Vite 会把本地 `/api` 请求重写到 `http://localhost:19413/v1`；Docker �
 | GET | `/api/v1/users/reports` | 测评报告汇总 |
 | GET / POST | `/api/v1/moods` | 查询（支持 `date`）/创建情绪 |
 | PUT / DELETE | `/api/v1/moods/:id` | 修改/删除情绪 |
+| GET / POST | `/api/v1/mood-tags` | 查询启用中的自定义情绪标签/创建（空白、超 8 字、超 12 个会被拒绝；同名幂等去重） |
+| DELETE | `/api/v1/mood-tags/:id` | 停用自定义标签（历史记录保留标签文字） |
 | GET | `/api/v1/assessments` | 测评列表 |
 | POST | `/api/v1/assessments/:id/take` | 提交答案与生成结果 |
 | POST | `/api/v1/assessments` | 创建测评（仅 admin） |
@@ -142,14 +145,15 @@ Vite 会把本地 `/api` 请求重写到 `http://localhost:19413/v1`；Docker �
 
 ### MoodTag
 
-值为 `happy`、`anxious`、`tired`、`angry`、`calm`。它在以下位置被重复定义/使用：
+固定值为 `happy`、`anxious`、`tired`、`angry`、`calm`，另支持每账号最多 12 个启用中的自定义标签（存于 `mood_tags` 表，按 `user_id + name` 唯一）。它在以下位置被重复定义/使用：
 
-1. 后端定义：`backend/internal/constants/mood.go`；模型持久化字段：`backend/internal/model/mood.go`。
-2. 后端校验与序列化：`backend/internal/service/mood_service.go`；中文格式化：`backend/internal/util/formatters.go`。
-3. 后端错误提示与耦合日志模板：`backend/internal/constants/error_codes.go`、`backend/internal/constants/log_templates.go`。
-4. 前端定义及类型：`frontend/src/constants/mood.ts`、`frontend/src/types/index.ts`。
-5. 前端交互与展示：`frontend/src/components/common/MoodSelector.tsx`、`MoodCard.tsx`、`MoodTrendChart.tsx`、`frontend/src/utils/moodColor.ts`、`frontend/src/api/mood.ts`。
-6. 页面消费：`frontend/src/pages/Dashboard.tsx`、`Moods.tsx`、`Journals.tsx`。
+1. 后端定义：`backend/internal/constants/mood.go`；模型持久化字段：`backend/internal/model/mood.go`、`backend/internal/model/mood_tag.go`。
+2. 后端校验与序列化：`backend/internal/service/mood_service.go`、`backend/internal/service/mood_tag_service.go`；中文格式化：`backend/internal/util/formatters.go`。
+3. 后端仓储、接口与路由：`backend/internal/repository/mood_tag_repository.go`、`backend/internal/handler/mood_tag_handler.go`、`backend/internal/router/mood_tags.go`。
+4. 后端错误提示与耦合日志模板：`backend/internal/constants/error_codes.go`、`backend/internal/constants/log_templates.go`、`backend/internal/constants/messages.go`。
+5. 前端定义及类型：`frontend/src/constants/mood.ts`、`frontend/src/types/index.ts`。
+6. 前端交互与展示：`frontend/src/components/common/MoodSelector.tsx`、`MoodCard.tsx`、`MoodTrendChart.tsx`、`frontend/src/utils/moodColor.ts`、`frontend/src/api/mood.ts`、`frontend/src/hooks/useCustomTags.ts`。
+7. 页面消费：`frontend/src/pages/Dashboard.tsx`、`Moods.tsx`、`Journals.tsx`。
 
 ### AssessmentCategory
 

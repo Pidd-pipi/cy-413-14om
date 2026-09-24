@@ -15,27 +15,39 @@ import (
 
 type MoodService struct {
 	repo   repository.MoodRepository
+	tags   repository.MoodTagRepository
 	logger *slog.Logger
 }
 
-func NewMoodService(r repository.MoodRepository, l *slog.Logger) *MoodService {
-	return &MoodService{r, l}
+func NewMoodService(r repository.MoodRepository, t repository.MoodTagRepository, l *slog.Logger) *MoodService {
+	return &MoodService{r, t, l}
 }
-func validTags(tags []string) bool {
+func (s *MoodService) validTags(uid uint, tags []string) (bool, error) {
 	allowed := map[string]bool{}
 	for _, v := range constants.MoodTags {
 		allowed[v] = true
 	}
+	customs, e := s.tags.ListActive(uid)
+	if e != nil {
+		return false, fmt.Errorf("MoodTag[user_id] list failed: %w", e)
+	}
+	for _, v := range customs {
+		allowed[v.Name] = true
+	}
 	for _, v := range tags {
 		if !allowed[v] {
-			return false
+			return false, nil
 		}
 	}
-	return true
+	return true, nil
 }
 func (s *MoodService) Create(uid uint, req dto.MoodRequest) (*model.Mood, error) {
-	if !validTags(req.MoodTags) {
-		return nil, util.NewAppError(constants.CodeValidation, "Mood[mood_tags] create failed: unsupported tag", nil)
+	ok, e := s.validTags(uid, req.MoodTags)
+	if e != nil {
+		return nil, e
+	}
+	if !ok {
+		return nil, util.NewAppError(constants.CodeValidation, "Mood[mood_tags] create failed: "+constants.MessageMoodTagUnsupported, nil)
 	}
 	d, e := time.Parse("2006-01-02", req.RecordDate)
 	if e != nil {
@@ -70,7 +82,11 @@ func (s *MoodService) Update(uid, id uint, req dto.MoodRequest) (*model.Mood, er
 	if e != nil {
 		return nil, fmt.Errorf("Mood[id=%d] fetch failed: %w", id, e)
 	}
-	if !validTags(req.MoodTags) {
+	ok, e := s.validTags(uid, req.MoodTags)
+	if e != nil {
+		return nil, e
+	}
+	if !ok {
 		return nil, util.WrapEntity("Mood", "mood_tags", id, constants.CodeValidation, nil)
 	}
 	d, e := time.Parse("2006-01-02", req.RecordDate)

@@ -9,3 +9,8 @@ const (
 )
 
 var MoodTags = []string{MoodHappy, MoodAnxious, MoodTired, MoodAngry, MoodCalm}
+
+const (
+	MoodTagMaxNameLength  = 8
+	MoodTagMaxUserCount   = 12
+)
